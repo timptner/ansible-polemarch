@@ -5,9 +5,9 @@ After=network.target remote-fs.target nss-lookup.target redis.service mysql.serv
 [Service]
 Type=forking
 ExecStart={{ app_directory }}/venv/bin/polemarchctl webserver
-ExecReload={{ app_directory }}/venv/bin/polemarchctl webserver reload={{ app_directory }}/pid/web.pid
-ExecStop={{ app_directory }}/venv/bin/polemarchctl webserver stop={{ app_directory }}/pid/web.pid
-PIDFile={{ app_directory }}/pid/web.pid
+ExecReload={{ app_directory }}/venv/bin/polemarchctl webserver reload={{ app_directory }}/pid/polemarch.pid
+ExecStop={{ app_directory }}/venv/bin/polemarchctl webserver stop={{ app_directory }}/pid/polemarch.pid
+PIDFile={{ app_directory }}/pid/polemarch.pid
 User=polemarch
 Group=polemarch
 KillSignal=SIGCONT

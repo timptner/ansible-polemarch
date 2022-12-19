@@ -1,8 +1,9 @@
 ---
 - hosts: all
+  become: yes
   
   vars_files:
-    - ../vars.yaml
+    - ../config.yaml
 
   pre_tasks:
     - name: Update apt cache if needed.
@@ -11,17 +12,15 @@
         cache_valid_time: 3600
 
   roles:
-    - geerlingguy.mysql
+    - geerlingguy.postgresql
 
   tasks:
     - name: Install required packages.
       ansible.builtin.apt:
         name:
           - acl
-          - python3-virtualenv
-          - python3.9
-          - python3.9-dev
           - gcc
+          - git
           - libffi-dev
           - libkrb5-dev
           - libffi7
@@ -29,9 +28,11 @@
           - libyaml-dev
           - libsasl2-dev
           - libldap2-dev
-          - default-libmysqlclient-dev
+          - nginx
+          - python3-virtualenv
+          - python3.9
+          - python3.9-dev
           - sshpass
-          - git
           - virtualenv
         state: present
 
@@ -63,7 +64,7 @@
 
     - name: Install polemarch python package.
       ansible.builtin.pip:
-        name: polemarch[mysql]
+        name: polemarch[postgresql]
         state: latest
         virtualenv: "{{ app_directory }}/venv"
         virtualenv_command: virtualenv
@@ -78,32 +79,53 @@
         group: polemarch
         mode: 0600
 
-    # - name: Ensure polemarch service exists.
-    #   ansible.builtin.template:
-    #     src: ../templates/polemarch.service.jinja
-    #     dest: /etc/systemd/system/polemarch.service
-    #     owner: root
-    #     group: root
-    #     mode: 0644
-    #   register: systemctl_reload_required
-
-    # - name: Reload systemctl daemon.
-    #   ansible.builtin.command: systemctl daemon-reload
-    #   when: systemctl_reload_required.changed
-
-    # - name: Ensure polemarch is running and starts at boot.
-    #   ansible.builtin.service:
-    #     name: polemarch
-    #     state: started
-    #     enabled: yes
-
     # INFO Default superuser ist admin:admin
     - name: Make migrations.
       ansible.builtin.command: "{{ app_directory }}/venv/bin/polemarchctl migrate"
       become: yes
       become_user: "{{ app_user }}"
 
-    - name: Start polemarch.
-      ansible.builtin.command: "{{ app_directory }}/venv/bin/polemarchctl webserver"
-      become: yes
-      become_user: "{{ app_user }}"
+    - name: Ensure polemarch service exists.
+      ansible.builtin.template:
+        src: ../templates/polemarch.service.jinja
+        dest: /etc/systemd/system/polemarch.service
+        owner: root
+        group: root
+        mode: 0644
+      register: systemctl_reload_required
+
+    - name: Reload systemctl daemon.
+      ansible.builtin.command: systemctl daemon-reload
+      when: systemctl_reload_required.changed
+
+    - name: Ensure polemarch is running and starts at boot.
+      ansible.builtin.service:
+        name: polemarch
+        state: started
+        enabled: yes
+
+    - name: Ensure nginx server block exists.
+      ansible.builtin.template:
+        src: ../templates/polemarch.conf.jinja
+        dest: /etc/nginx/conf.d/polemarch.conf
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart nginx
+
+    - name: Ensure nginx default site is disabled.
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: restart nginx
+
+  handlers:
+    - name: restart polemarch
+      ansible.builtin.service:
+        name: polemarch
+        state: reloaded
+
+    - name: restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded

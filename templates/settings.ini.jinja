@@ -1,13 +1,12 @@
 [database]
-engine = django.db.backends.mysql
-name = {{ mysql_databases[0].name }}
-user = {{ mysql_users[0].name }}
-password = {{ mysql_users[0].password }}
-databases_without_cte_support = default
+engine = django.db.backends.postgresql
+host = 127.0.0.1
+name = {{ postgresql_databases[0].name }}
+user = {{ postgresql_users[0].name }}
+password = {{ postgresql_users[0].password }}
 
 [database.options]
 connect_timeout = 20
-init_command = SET sql_mode='STRICT_TRANS_TABLES', default_storage_engine=INNODB, NAMES 'utf8', CHARACTER SET 'utf8', SESSION collation_connection = 'utf8_unicode_ci'
 
 [uwsgi]
 uid = {{ app_user }}
@@ -18,7 +17,7 @@ http-keepalive = true
 pidfile = {{ app_directory }}/pid/polemarch.pid
 log_file = {{ app_directory }}/logs/polemarch_web.log
 # Uncomment it for HTTPS and install `uwsgi` pypi package to env:
-# addrport = 127.0.0.1:8080
+addrport = 127.0.0.1:8080
 # https = 0.0.0.0:443,{{ config_directory }}/polemarch.crt,{{ config_directory }}/polemarch.key
 
 [worker]

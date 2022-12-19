@@ -1,0 +1,14 @@
+server {
+  listen        80 default_server;
+  listen        [::]:80 default_server;
+
+  server_name   {{ allowed_hosts|join(' ') }};
+
+  access_log    /var/log/nginx/polemarch.access.log;
+  error_log     /var/log/nginx/polemarch.error.log warn;
+
+  location / {
+    proxy_pass        http://127.0.0.1:8080;
+    proxy_set_header  Host $host;
+  }
+}

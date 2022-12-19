@@ -1,0 +1,21 @@
+# Application
+config_directory: /etc/polemarch
+app_directory: /opt/polemarch
+app_user: polemarch
+allowed_hosts:
+  - polemarch.test
+  - www.polemarch.test
+
+# Database
+postgresql_python_library: python3-psycopg2
+postgresql_locales:
+  - 'en_US.UTF-8'
+  - 'de_DE.UTF-8'
+postgresql_databases:
+  - name: polemarch_db
+    lc_collate: 'de_DE.UTF-8'
+    lc_ctype: 'de_DE.UTF-8'
+    owner: polemarch_user
+postgresql_users:
+  - name: polemarch_user
+    password: secret
