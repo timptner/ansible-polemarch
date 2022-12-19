@@ -1,0 +1,39 @@
+---
+- hosts: all
+  remote_user: vagrant
+
+  tasks:
+    - name: Update SSH configuration.
+      ansible.builtin.lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: "{{ item.search }}"
+        line: "{{ item.replace }}"
+        state: present
+        validate: "sshd -t -f %s"
+      loop:
+        - search: "^#?PermitRootLogin"
+          replace: "PermitRootLogin yes"
+      notify: restart ssh
+
+    - name: Ensure ssh config directory exists for root.
+      ansible.builtin.file:
+        path: /root/.ssh
+        state: directory
+        mode: 0700
+
+    - name: Copy authorized ssh keys for root login.
+      ansible.builtin.copy:
+        src: /home/vagrant/.ssh/authorized_keys
+        remote_src: yes
+        dest: /root/.ssh/authorized_keys
+        owner: root
+        group: root
+        mode: 0600
+
+  handlers:
+    - name: restart ssh
+      ansible.builtin.service:
+        name: ssh
+        state: restarted
+
+- ansible.builtin.import_playbook: main.yaml
