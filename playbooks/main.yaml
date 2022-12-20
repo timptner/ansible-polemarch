@@ -78,6 +78,7 @@
         owner: polemarch
         group: polemarch
         mode: 0600
+      notify: restart polemarch
 
     # INFO Default superuser ist admin:admin
     - name: Make migrations.
